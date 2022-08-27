@@ -14,7 +14,6 @@ from utils import find_file_types, modify_cell_value, create_directory, \
     modify_cell_value_simple, modify_cell_value_with_operate, \
     calc_modify_result, get_cell_real_position
 
-
 class HandleExcel(object):
 
     def __init__(self, conf, directory_path):
@@ -35,10 +34,9 @@ class HandleExcel(object):
         # self.files_list = filter(lambda x: re.findall("(.xlsx)|(.xls)$", x), files)
         # self.files_list = map(lambda x: self.directory_path + "\\" + x, files_list)
 
-    def handle(self, progress_bar):
+    def handle(self, progress_bar_signal):
 
         self.find_all_excel_file()
-        a = time.time()
 
         with ThreadPoolExecutor(5) as threadPool:
 
@@ -51,14 +49,16 @@ class HandleExcel(object):
             num = 0
             while True:
                 QUEUE.get()
-                time.sleep(0.3)
                 num += 1
-                progress_bar.setValue(ceil((num / count) * 100))
+                a = ceil((num / count) * 100)
+                progress_bar_signal.progress_signal.emit(a)
                 if num == count:
                     break
 
-            print("count", count)
-        print(time.time()-a)
+
+def handle_calc(c, directory_path, progress_bar_signal):
+    h = HandleExcel(c, directory_path)
+    h.handle(progress_bar_signal)
 
 
 def calc(directory_path, conf, file_name):
@@ -217,16 +217,6 @@ def calc(directory_path, conf, file_name):
     wb.close()
     wb_data_only.close()
     QUEUE.put("1")
-
-
-def set_process_bar(process_bar, count):
-    num = 0
-    while QUEUE.get():
-
-        num += 1
-        process_bar.setValue(ceil((num / count) * 100))
-        if num == count:
-            break
 
 
 if __name__ == "__main__":

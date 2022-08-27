@@ -414,8 +414,9 @@ def get_cell_real_position(sheet, position):
 
 def calc_modify_result(cell_value, operator, value):
     r = cell_value + operator + value
-
+    # print("000000000000", r)
     r = eval(r)
+    # print(r)
 
     if type(r) is int:
         pass

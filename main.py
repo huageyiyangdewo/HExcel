@@ -1,6 +1,10 @@
 import logging
 
-from PySide2.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
+from threading import Thread
+
+
+from PySide2.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QProgressBar
+from PySide2.QtCore import QObject, Signal
 from ui_main import Ui_MainWindow
 
 logging.basicConfig(level=logging.INFO,
@@ -10,6 +14,10 @@ logging.basicConfig(level=logging.INFO,
                     '%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
                     )
 
+
+class ProgressBarSignals(QObject):
+    # 定义一个信号，
+    progress_signal = Signal(int)
 
 
 # 注意 这里选择的父类 要和你UI文件窗体一样的类型
@@ -25,6 +33,12 @@ class MainWindow(QMainWindow):
 
         self.directory_path = None
         self.file_path = None
+
+        self.progress_bar_signal = ProgressBarSignals()
+        self.progress_bar_signal.progress_signal.connect(self.set_progress_bar_value)
+
+    def set_progress_bar_value(self, num):
+        self.ui.progressBar.setValue(num)
 
     def handle(self):
 
@@ -63,7 +77,7 @@ class MainWindow(QMainWindow):
                               t
                               )
 
-        from calc import HandleExcel
+        from calc import handle_calc
         from utils import ParseConf
 
         p = ParseConf(self.file_path)
@@ -75,9 +89,8 @@ class MainWindow(QMainWindow):
                               c
                               )
 
-        h = HandleExcel(c, self.directory_path)
-        h.handle(self.ui.progressBar)
-
+        t = Thread(target=handle_calc, args=(c, self.directory_path, self.progress_bar_signal))
+        t.start()
         # self.ui.progressBar.setValue(math.ceil((HANDLE_COUNTS/COUNTS)*100))
         # self.ui.progressBar.setValue(math.ceil(100))
 
